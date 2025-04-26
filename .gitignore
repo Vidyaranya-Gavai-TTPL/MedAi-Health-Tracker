@@ -1,0 +1,11 @@
+# Ignore Python virtual environment
+venv/
+
+# Ignore everything inside media/uploads, but keep the folder
+media/uploads/*
+!media/uploads/
+!media/uploads/.gitkeep
+
+# Ignore env files
+.env
+env

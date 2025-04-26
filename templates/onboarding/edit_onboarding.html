@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load onboarding_tags %}
+
+{% block title %}Edit Onboarding - MedAI Health Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">Edit Your Health Information</h2>
+                <p class="text-center mb-4">Update your health goals and preferences.</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    {% for question in questions %}
+                        <div class="mb-4">
+                            <label class="form-label">{{ question.question }}</label>
+                            {% if question.question_type == 'text' %}
+                                <input type="text" name="question_{{ question.id }}" class="form-control" 
+                                       value="{{ answers|get_item:question.id }}" required>
+                            {% elif question.question_type == 'number' %}
+                                <input type="number" name="question_{{ question.id }}" class="form-control" 
+                                       value="{{ answers|get_item:question.id }}" required>
+                            {% elif question.question_type == 'choice' %}
+                                <select name="question_{{ question.id }}" class="form-control" required>
+                                    <option value="">Select an option</option>
+                                    {% for choice in question.choices %}
+                                        <option value="{{ choice }}" 
+                                                {% if answers|get_item:question.id == choice %}selected{% endif %}>
+                                            {{ choice }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary">Update Information</button>
+                        <a href="{% url 'profile' %}" class="btn btn-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

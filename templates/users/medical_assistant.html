@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Voice Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        #conversation {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-height: 60vh;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 12px 15px;
+            border-radius: 18px;
+            max-width: 85%;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background: #e3f2fd;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            background: #f0f0f0;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #recordBtn {
+            padding: 15px;
+            font-size: 16px;
+            background: #4361ee;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        #recordBtn.recording {
+            background: #e63946;
+            transform: scale(1.02);
+        }
+
+        #recordBtn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        #status {
+            text-align: center;
+            color: #495057;
+            font-size: 14px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        #progress {
+            text-align: center;
+            color: #6c757d;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            #conversation {
+                padding: 10px;
+                max-height: 55vh;
+            }
+            
+            .message {
+                max-width: 90%;
+                padding: 10px 12px;
+                font-size: 15px;
+            }
+            
+            #recordBtn {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🩺 Medical Voice Consultation</h1>
+        <div id="conversation"></div>
+        <div class="controls">
+            <button id="recordBtn">Hold to Answer</button>
+            <div id="status">Starting consultation...</div>
+            <div id="progress"></div>
+        </div>
+    </div>
+
+    <script>
+        let conversationId = null;
+        let mediaRecorder;
+        let audioChunks = [];
+        const MEDICAL_QUESTIONS = JSON.parse('{{ MEDICAL_QUESTIONS_JSON|escapejs }}');
+        
+        // DOM elements
+        const recordBtn = document.getElementById('recordBtn');
+        const conversationDiv = document.getElementById('conversation');
+        const statusDiv = document.getElementById('status');
+        const progressDiv = document.getElementById('progress');
+
+        // Start new conversation
+        async function startConversation() {
+            console.log("Starting new conversation...");
+            statusDiv.textContent = "Starting medical consultation...";
+            try {
+                console.log("Sending start conversation request...");
+                const response = await fetch('/medical-assistant/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: 'action=start_conversation'
+                });
+                console.log("Response status:", response.status);
+                const data = await response.json();
+                console.log("Response data:", data);
+                
+                conversationId = data.conversation_id;
+                addMessage(data.ai_response, 'assistant');
+                await playAudioList(data.ai_audio);
+                updateProgress(data.question_index);
+                statusDiv.textContent = "Ready - Hold button to answer";
+            } catch (error) {
+                console.error("Start failed:", error);
+                statusDiv.textContent = "Error starting consultation";
+            }
+        }
+
+        // Handle recording
+        recordBtn.addEventListener('mousedown', startRecording);
+        recordBtn.addEventListener('mouseup', stopRecording);
+        recordBtn.addEventListener('touchstart', startRecording);
+        recordBtn.addEventListener('touchend', stopRecording);
+
+        async function startRecording() {
+            console.log("Starting recording...");
+            statusDiv.textContent = "Recording your answer...";
+            recordBtn.classList.add('recording');
+            audioChunks = [];
+            
+            try {
+                console.log("Requesting microphone access...");
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    } 
+                });
+                console.log("Microphone access granted");
+                
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus'
+                });
+                
+                mediaRecorder.ondataavailable = e => {
+                    console.log("Audio data available:", e.data.size);
+                    if (e.data.size > 0) {
+                        audioChunks.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onerror = e => {
+                    console.error("MediaRecorder error:", e);
+                    statusDiv.textContent = "Error recording audio";
+                };
+                
+                mediaRecorder.start(100); // Collect data every 100ms
+                console.log("Recording started");
+            } catch (error) {
+                console.error("Mic error:", error);
+                statusDiv.textContent = "Error accessing microphone";
+            }
+        }
+
+        async function stopRecording() {
+            if (!mediaRecorder) {
+                console.log("No media recorder found");
+                return;
+            }
+            
+            console.log("Stopping recording...");
+            recordBtn.classList.remove('recording');
+            statusDiv.textContent = "Processing your answer...";
+            
+            try {
+                // Stop recording and wait for final data
+                await new Promise(resolve => {
+                    mediaRecorder.onstop = resolve;
+                    mediaRecorder.stop();
+                });
+                
+                const stream = mediaRecorder.stream;
+                stream.getTracks().forEach(track => track.stop());
+                console.log("Recording stopped, preparing to send...");
+                
+                if (audioChunks.length === 0) {
+                    throw new Error("No audio data recorded");
+                }
+                
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                console.log("Audio blob created, size:", audioBlob.size);
+                
+                if (audioBlob.size === 0) {
+                    throw new Error("Empty audio blob created");
+                }
+                
+                const formData = new FormData();
+                formData.append('action', 'send_voice');
+                formData.append('conversation_id', conversationId);
+                formData.append('audio', audioBlob, 'recording.webm');
+                
+                console.log("Sending audio to server...");
+                const response = await fetch('/medical-assistant/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: formData
+                });
+                
+                console.log("Response status:", response.status);
+                const data = await response.json();
+                console.log("Response data:", data);
+                
+                if (response.ok) {
+                    addMessage(data.user_message, 'user');
+                    addMessage(data.ai_response, 'assistant');
+                    if (data.ai_audio && data.ai_audio.length > 0) {
+                        await playAudioList(data.ai_audio);
+                    }
+                    updateProgress(data.question_index);
+                    statusDiv.textContent = "Ready - Hold button to answer";
+                } else {
+                    throw new Error(data.error || "Failed to process voice message");
+                }
+            } catch (error) {
+                console.error("Processing error:", error);
+                statusDiv.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Helper function to get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            
+            // Format the text for better readability
+            let formattedText = text;
+            if (sender === 'assistant') {
+                // Add line breaks for sections
+                formattedText = formattedText
+                    .replace(/Diagnosis:/g, '\nDiagnosis:')
+                    .replace(/Treatment plan:/g, '\nTreatment plan:')
+                    .replace(/Diet recommendations:/g, '\nDiet recommendations:')
+                    .replace(/Lifestyle changes:/g, '\nLifestyle changes:');
+                
+                // Add styling for sections
+                formattedText = formattedText.split('\n').map(line => {
+                    if (line.startsWith('Diagnosis:') || 
+                        line.startsWith('Treatment plan:') || 
+                        line.startsWith('Diet recommendations:') || 
+                        line.startsWith('Lifestyle changes:')) {
+                        return `<strong>${line}</strong>`;
+                    }
+                    return line;
+                }).join('\n');
+            }
+            
+            msgDiv.innerHTML = formattedText;
+            conversationDiv.appendChild(msgDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        }
+
+        function updateProgress(currentIndex) {
+            if (currentIndex >= 0) {
+                const total = MEDICAL_QUESTIONS.length;
+                const percent = Math.round((currentIndex / total) * 100);
+                progressDiv.textContent = `Progress: ${percent}% (${currentIndex}/${total} questions answered)`;
+            }
+        }
+
+        async function playAudioList(audioUrls) {
+            if (!audioUrls || !Array.isArray(audioUrls) || audioUrls.length === 0) {
+                console.log("No audio files to play");
+                return;
+            }
+            
+            console.log("Playing audio files:", audioUrls);
+            for (const url of audioUrls) {
+                try {
+                    await new Promise((resolve, reject) => {
+                        const audio = new Audio();
+                        audio.src = url;
+                        
+                        audio.addEventListener('loadeddata', () => {
+                            console.log("Audio loaded:", url);
+                        });
+                        
+                        audio.addEventListener('canplaythrough', () => {
+                            console.log("Audio can play:", url);
+                        });
+                        
+                        audio.addEventListener('ended', () => {
+                            console.log("Audio ended:", url);
+                            audio.remove();
+                            resolve();
+                        });
+                        
+                        audio.addEventListener('error', (e) => {
+                            console.error("Audio error:", e, url);
+                            audio.remove();
+                            reject(new Error(`Failed to play audio: ${url}`));
+                        });
+                        
+                        document.body.appendChild(audio);
+                        audio.play().catch(e => {
+                            console.error("Play failed:", e, url);
+                            reject(e);
+                        });
+                    });
+                    
+                    // Natural pause between sentences
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                } catch (error) {
+                    console.error("Error playing audio:", error);
+                    // Continue with next audio file even if one fails
+                    continue;
+                }
+            }
+        }
+
+        // Initialize
+        startConversation();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block title %}Fitness Dashboard - MedAI Health Tracker{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css" rel="stylesheet">
+<style>
+    .stats-card {
+        background-color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stats-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    .stats-label {
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .chart-container {
+        background-color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .refresh-button {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-value" id="total-steps">0</div>
+            <div class="stats-label">Total Steps</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-value" id="avg-heart-rate">0</div>
+            <div class="stats-label">Average Heart Rate</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stats-card">
+            <div class="stats-value" id="total-distance">0</div>
+            <div class="stats-label">Total Distance (km)</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h4>Steps</h4>
+            <canvas id="steps-chart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h4>Heart Rate</h4>
+            <canvas id="heart-rate-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="chart-container">
+            <h4>Distance</h4>
+            <canvas id="distance-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<button class="btn btn-primary refresh-button" id="refresh-data">
+    <i class="fas fa-sync-alt"></i> Refresh Data
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+    let stepsChart, heartRateChart, distanceChart;
+    
+    function createCharts(data) {
+        // Steps Chart
+        const stepsCtx = document.getElementById('steps-chart').getContext('2d');
+        stepsChart = new Chart(stepsCtx, {
+            type: 'line',
+            data: {
+                labels: data.steps.map(d => new Date(d.timestamp).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Steps',
+                    data: data.steps.map(d => d.value),
+                    borderColor: '#4CAF50',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Heart Rate Chart
+        const heartRateCtx = document.getElementById('heart-rate-chart').getContext('2d');
+        heartRateChart = new Chart(heartRateCtx, {
+            type: 'line',
+            data: {
+                labels: data.heart_rate.map(d => new Date(d.timestamp).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Heart Rate (bpm)',
+                    data: data.heart_rate.map(d => d.value),
+                    borderColor: '#F44336',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Distance Chart
+        const distanceCtx = document.getElementById('distance-chart').getContext('2d');
+        distanceChart = new Chart(distanceCtx, {
+            type: 'line',
+            data: {
+                labels: data.distance.map(d => new Date(d.timestamp).toLocaleTimeString()),
+                datasets: [{
+                    label: 'Distance (km)',
+                    data: data.distance.map(d => d.value),
+                    borderColor: '#2196F3',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Update stats
+        const totalSteps = data.steps.reduce((sum, d) => sum + d.value, 0);
+        const avgHeartRate = data.heart_rate.reduce((sum, d) => sum + d.value, 0) / data.heart_rate.length;
+        const totalDistance = data.distance.reduce((sum, d) => sum + d.value, 0);
+        
+        document.getElementById('total-steps').textContent = totalSteps.toLocaleString();
+        document.getElementById('avg-heart-rate').textContent = avgHeartRate.toFixed(1);
+        document.getElementById('total-distance').textContent = totalDistance.toFixed(2);
+    }
+    
+    function fetchData() {
+        fetch('/fitness/data/')
+            .then(response => response.json())
+            .then(data => {
+                if (stepsChart) stepsChart.destroy();
+                if (heartRateChart) heartRateChart.destroy();
+                if (distanceChart) distanceChart.destroy();
+                createCharts(data);
+            })
+            .catch(error => console.error('Error fetching data:', error));
+    }
+    
+    document.getElementById('refresh-data').addEventListener('click', fetchData);
+    
+    // Initial data fetch
+    fetchData();
+    
+    // Refresh data every 5 minutes
+    setInterval(fetchData, 5 * 60 * 1000);
+</script>
+{% endblock %} 
