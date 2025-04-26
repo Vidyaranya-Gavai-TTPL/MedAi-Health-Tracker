@@ -79,19 +79,19 @@ def google_auth_complete(request):
 # Medical questionnaire
 MEDICAL_QUESTIONS = [
     "Can you tell me your age, gender, and general health background?",
-    "Do you have any existing medical conditions or allergies?",
-    "Is there family history of chronic conditions?",
-    "What kind of work do you do?",
-    "How many hours do you work daily?",
-    "What is your typical daily routine?",
-    "How would you rate your sleep quality?",
-    "What kind of physical activity do you do?",
-    "Do you have any current symptoms?",
-    "Have you tried any treatments before?",
-    "What does your usual daily diet look like?",
-    "Do you experience stress or mood swings?",
-    "Do you use any health trackers?",
-    "What are your current health goals?"
+    # "Do you have any existing medical conditions or allergies?",
+    # "Is there family history of chronic conditions?",
+    # "What kind of work do you do?",
+    # "How many hours do you work daily?",
+    # "What is your typical daily routine?",
+    # "How would you rate your sleep quality?",
+    # "What kind of physical activity do you do?",
+    # "Do you have any current symptoms?",
+    # "Have you tried any treatments before?",
+    # "What does your usual daily diet look like?",
+    # "Do you experience stress or mood swings?",
+    # "Do you use any health trackers?",
+    # "What are your current health goals?"
 ]
 
 @method_decorator(login_required, name='dispatch')
@@ -112,15 +112,18 @@ class MedicalAssistantView(View):
         voices = engine.getProperty('voices')
         
         # Find a female voice
-        for voice in voices:
-            if 'female' in voice.name.lower():
-                engine.setProperty('voice', voice.id)
-                break
+        # for voice in voices:
+        #     if 'Punjabi' in voice.name.lower():
+        engine.setProperty('voice', 'Punjabi')
+                # break
+        # for voice in voices:
+        #     print(f"Name: {voice.name}, ID: {voice.id}")
+
         
         # Set voice properties
         engine.setProperty('rate', 150)  # Slightly slower for clarity
         engine.setProperty('volume', 0.9)
-        engine.setProperty('pitch', 1.1)  # Slightly higher pitch for female voice
+        engine.setProperty('pitch', 4)  # Slightly higher pitch for female voice
         
         return engine
 
@@ -225,6 +228,7 @@ class MedicalAssistantView(View):
     
     def _save_conversations(self, request, conversations):
         """Save conversations to session"""
+
         request.session['conversations'] = conversations
         request.session.modified = True
     

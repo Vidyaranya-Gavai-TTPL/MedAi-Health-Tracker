@@ -87,33 +87,34 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'profile' %}">MedAI Health Tracker</a>
+            <a class="navbar-brand fw-bold text-primary" href="{% url 'profile' %}">MedAI Health Tracker</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+    
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'profile' %}">
-                                <i class="fas fa-user"></i> Profile
+                        <li class="nav-item mx-2">
+                            <a class="nav-link d-flex align-items-center" href="{% url 'profile' %}">
+                                <i class="fas fa-user me-1"></i> Profile
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'chat' %}">
-                                <i class="fas fa-comments"></i> Chat
+                        <li class="nav-item mx-2">
+                            <a class="nav-link d-flex align-items-center" href="{% url 'chat' %}">
+                                <i class="fas fa-comments me-1"></i> Chat
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'medical_assistant' %}">
-                                <i class="fas fa-user-md"></i> Medical Assistant
+                        <li class="nav-item mx-2">
+                            <a class="nav-link d-flex align-items-center" href="{% url 'medical_assistant' %}">
+                                <i class="fas fa-user-md me-1"></i> Assistant
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?')">
-                                <i class="fas fa-sign-out-alt"></i> Logout
+                        <li class="nav-item mx-2">
+                            <a class="nav-link d-flex align-items-center text-danger" href="{% url 'logout' %}" onclick="return confirm('Are you sure you want to logout?')">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
                             </a>
                         </li>
                     {% endif %}
@@ -121,6 +122,7 @@
             </div>
         </div>
     </nav>
+    
 
     <div class="main-content">
         <div class="container">

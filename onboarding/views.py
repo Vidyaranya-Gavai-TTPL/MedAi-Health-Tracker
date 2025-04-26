@@ -23,7 +23,7 @@ def onboarding(request):
                 )
         
         messages.success(request, 'Onboarding completed successfully!')
-        return redirect('dashboard')
+        return redirect('medical_assistant')
     
     # Get all questions
     questions = OnboardingQuestion.objects.all().order_by('order')
