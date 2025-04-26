@@ -9,24 +9,33 @@
         display: flex;
         flex-direction: column;
     }
-    
+
     .chat-messages {
         flex: 1;
         overflow-y: auto;
         padding: 20px;
     }
-    
+
     .message {
         margin-bottom: 15px;
         max-width: 80%;
         animation: fadeIn 0.3s ease-in-out;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added shadow */
+        transition: box-shadow 0.3s ease; /* Smooth transition for shadow */
     }
-    
+
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
+
     .user-message {
         margin-left: auto;
         background-color: var(--primary-color);
@@ -34,40 +43,47 @@
         border-radius: 15px;
         padding: 10px 15px;
     }
-    
+
     .bot-message {
         margin-right: auto;
         background-color: white;
         border-radius: 15px;
         padding: 10px 15px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); /* Slightly stronger shadow */
+        border: 1px solid #eee; /* Added border */
     }
-    
+
     .input-container {
         padding: 20px;
         background-color: white;
         border-top: 1px solid #eee;
     }
-    
+
     .input-group {
         position: relative;
     }
-    
+
     .input-group-text {
         background-color: transparent;
         border: none;
+        transition: background-color 0.3s ease; /* Smooth transition for hover */
     }
-    
+
+    .input-group-text:hover {
+        background-color: #f0f0f0; /* Light gray on hover */
+    }
+
     .input-group-text i {
         cursor: pointer;
     }
-    
+
     .message-image {
         max-width: 200px;
         border-radius: 10px;
         margin-top: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Added shadow */
     }
-    
+
     .audio-player {
         width: 100%;
         margin-top: 10px;
@@ -84,8 +100,13 @@
     }
 
     @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
     }
 
     .typing-indicator {
@@ -95,6 +116,7 @@
         background-color: #f0f0f0;
         border-radius: 15px;
         max-width: 80%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Added shadow */
     }
 
     .typing-indicator span {
@@ -116,8 +138,14 @@
     }
 
     @keyframes typing {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-5px);
+        }
     }
 
     .error-message {
@@ -128,34 +156,41 @@
         padding: 10px 15px;
         margin: 10px 0;
         max-width: 80%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Added shadow */
     }
 
     /* Markdown styles */
     .markdown-content {
         line-height: 1.6;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Added shadow */
+        padding: 10px;
+        border-radius: 10px;
     }
-    
-    .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3 {
         margin-top: 1em;
         margin-bottom: 0.5em;
     }
-    
+
     .markdown-content p {
         margin-bottom: 1em;
     }
-    
-    .markdown-content ul, .markdown-content ol {
+
+    .markdown-content ul,
+    .markdown-content ol {
         margin-bottom: 1em;
         padding-left: 1.5em;
     }
-    
+
     .markdown-content code {
         background-color: #f0f0f0;
         padding: 0.2em 0.4em;
         border-radius: 3px;
         font-family: monospace;
     }
-    
+
     .markdown-content pre {
         background-color: #f0f0f0;
         padding: 1em;
@@ -163,23 +198,64 @@
         overflow-x: auto;
         margin-bottom: 1em;
     }
-    
+
     .markdown-content blockquote {
         border-left: 4px solid #ddd;
         padding-left: 1em;
         margin-left: 0;
         color: #666;
     }
-    
+
     .markdown-content a {
         color: #007bff;
         text-decoration: none;
     }
-    
+
     .markdown-content a:hover {
         text-decoration: underline;
     }
+
+    /* Audio recording styles */
+    .recording-indicator {
+        display: none;
+        color: #dc3545;
+        margin-right: 10px;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    /* Hidden file input */
+    #file-input {
+        display: none;
+    }
+
+    /* Media buttons */
+    .media-buttons {
+        display: flex;
+        gap: 5px;
+        margin-right: 5px;
+    }
+
+    /* Input field focus */
+    #message-input:focus {
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Blue glow on focus */
+    }
 </style>
+
 {% endblock %}
 
 {% block content %}
@@ -218,6 +294,18 @@
     
     <div class="input-container">
         <div class="input-group">
+            <input type="file" id="file-input" accept="image/*,audio/*">
+            <div class="media-buttons">
+                <button class="btn btn-outline-secondary input-group-text" id="image-button" title="Send image">
+                    <i class="fas fa-image"></i>
+                </button>
+                <button class="btn btn-outline-secondary input-group-text" id="record-button" title="Record audio">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <span class="recording-indicator" id="recording-indicator">
+                    <i class="fas fa-circle"></i> Recording
+                </span>
+            </div>
             <input type="text" class="form-control" id="message-input" placeholder="Type your message...">
             <button class="btn btn-outline-secondary input-group-text" id="send-button">
                 <i class="fas fa-paper-plane"></i>
@@ -239,8 +327,16 @@
     const sendButton = document.getElementById('send-button');
     const clearChat = document.getElementById('clear-chat');
     const typingIndicator = document.getElementById('typing-indicator');
+    const imageButton = document.getElementById('image-button');
+    const recordButton = document.getElementById('record-button');
+    const recordingIndicator = document.getElementById('recording-indicator');
+    const fileInput = document.getElementById('file-input');
     const apiKey = '{{ api_key }}';
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
     
     // Configure marked for security
     marked.setOptions({
@@ -270,15 +366,35 @@
         scrollToBottom();
     }
     
-    function sendMessage(content) {
-        if (!content.trim()) return;
+    function sendMessage(content, type = 'text', file = null) {
+        if (!content && !file) return;
         
-        console.log('Sending message:', content);
+        console.log('Sending message:', {content, type, file});
         
         // Show user message immediately
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message user-message';
-        messageDiv.textContent = content;
+        
+        if (type === 'text') {
+            messageDiv.textContent = content;
+        } else if (type === 'image' && file) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.className = 'message-image';
+            img.alt = 'Uploaded image';
+            messageDiv.appendChild(img);
+            content = 'Image uploaded';
+        } else if (type === 'audio' && file) {
+            const audio = document.createElement('audio');
+            audio.controls = true;
+            audio.className = 'audio-player';
+            const source = document.createElement('source');
+            source.src = URL.createObjectURL(file);
+            source.type = 'audio/wav';
+            audio.appendChild(source);
+            messageDiv.appendChild(audio);
+            content = 'Audio message';
+        }
         
         const timeDiv = document.createElement('div');
         timeDiv.className = 'mt-2';
@@ -291,22 +407,23 @@
         // Show typing indicator
         showTypingIndicator();
         
-        // Send message to Gemini API
-        fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // Prepare form data for file upload
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('content', content);
+        if (file) {
+            formData.append('file', file);
+        }
+        
+        // Send to server
+        fetch('/chat/send/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: content
-                    }]
-                }]
-            })
+            body: formData
         })
         .then(response => {
-            console.log('Response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -316,9 +433,8 @@
             console.log('Response data:', data);
             hideTypingIndicator();
             
-            if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
-                const responseText = data.candidates[0].content.parts[0].text;
-                const renderedMarkdown = marked.parse(responseText);
+            if (data.response) {
+                const renderedMarkdown = marked.parse(data.response);
                 
                 // Add response
                 const responseDiv = document.createElement('div');
@@ -335,33 +451,9 @@
                 
                 chatMessages.appendChild(responseDiv);
                 scrollToBottom();
-                
-                // Save to server
-                fetch('/chat/send/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({
-                        type: 'text',
-                        content: content,
-                        response: responseText
-                    })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Failed to save message to server');
-                    }
-                    return response.json();
-                })
-                .catch(error => {
-                    console.error('Error saving message:', error);
-                    showError('Message was sent but could not be saved. Please try again.');
-                });
             } else {
                 console.error('Invalid response structure:', data);
-                showError('Received an unexpected response format from Gemini API');
+                showError('Received an unexpected response format from server');
             }
         })
         .catch(error => {
@@ -377,6 +469,7 @@
         });
     }
     
+    // Text message handling
     messageInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' && this.value.trim()) {
             sendMessage(this.value.trim());
@@ -391,6 +484,65 @@
         }
     });
     
+    // Image upload handling
+    imageButton.addEventListener('click', function() {
+        fileInput.accept = 'image/*';
+        fileInput.click();
+    });
+    
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const file = this.files[0];
+            const fileType = file.type.split('/')[0];
+            
+            if (fileType === 'image') {
+                sendMessage('', 'image', file);
+            }
+            this.value = ''; // Reset file input
+        }
+    });
+    
+    // Audio recording handling
+    recordButton.addEventListener('click', toggleRecording);
+    
+    async function toggleRecording() {
+        if (!isRecording) {
+            // Start recording
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    sendMessage('', 'audio', audioBlob);
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                recordingIndicator.style.display = 'inline-block';
+                recordButton.innerHTML = '<i class="fas fa-stop"></i>';
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                showError('Could not access microphone. Please check permissions.');
+            }
+        } else {
+            // Stop recording
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordingIndicator.style.display = 'none';
+                recordButton.innerHTML = '<i class="fas fa-microphone"></i>';
+            }
+        }
+    }
+    
+    // Clear chat handling
     clearChat.addEventListener('click', function() {
         if (confirm('Are you sure you want to clear the chat history?')) {
             fetch('/chat/clear/', {
@@ -411,4 +563,4 @@
     // Focus input on page load
     messageInput.focus();
 </script>
-{% endblock %} 
+{% endblock %}
